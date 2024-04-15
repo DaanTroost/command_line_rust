@@ -1,0 +1,1 @@
+This repo will house all the projects I'm building while working through the Command-line Rust book.
