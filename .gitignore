@@ -12,3 +12,4 @@ Cargo.lock
 
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
+ch3_catr/tests/inputs/cant-touch-this.txt
