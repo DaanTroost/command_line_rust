@@ -1,8 +1,7 @@
-use clap::Parser;
 use anyhow::Result;
-use std::fs::File;
-use std::io::{BufRead, BufReader, self};
-
+use clap::Parser;
+use std::fs::{self, File};
+use std::io::{self, BufRead, BufReader, Read};
 
 #[derive(Debug, Parser)]
 #[command(author = "Daniël Quirinus Troost<d.q.troost@outlook.com>")]
@@ -35,14 +34,13 @@ fn main() {
         eprintln!("{e}");
         std::process::exit(1);
     }
-
 }
 
 fn run(args: Arguments) -> Result<()> {
     for filename in args.files {
         match open_file(&filename) {
             Err(err) => eprintln!("Failed to open {filename}: {err}"),
-            Ok(_) => println!("Opened {filename}"),
+            Ok(_) => read_file(&filename, &args.number_lines, &args.number_nonblank_lines)?,
         }
     }
     Ok(())
@@ -53,4 +51,12 @@ fn open_file(filename: &str) -> Result<Box<dyn BufRead>> {
         "-" => Ok(Box::new(BufReader::new(io::stdin()))),
         _ => Ok(Box::new(BufReader::new(File::open(filename)?))),
     }
+}
+
+fn read_file(filename: &str, _flag_number: &bool, _flag_number_nonblank: &bool) -> Result<()> {
+    let content = fs::read_to_string(filename)?;
+
+    println!("{content}");
+
+    Ok(())
 }
