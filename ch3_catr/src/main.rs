@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::Parser;
 use std::fs::{self, File};
-use std::io::{self, BufRead, BufReader, Read};
+use std::io::{self, BufRead, BufReader};
 
 #[derive(Debug, Parser)]
 #[command(author = "Daniël Quirinus Troost<d.q.troost@outlook.com>")]
@@ -53,10 +53,24 @@ fn open_file(filename: &str) -> Result<Box<dyn BufRead>> {
     }
 }
 
-fn read_file(filename: &str, _flag_number: &bool, _flag_number_nonblank: &bool) -> Result<()> {
+fn read_file(filename: &str, flag_number: &bool, flag_number_nonblank: &bool) -> Result<()> {
     let content = fs::read_to_string(filename)?;
 
-    println!("{content}");
+    let mut split_lines: Vec<String> = vec![];
+
+    for (index, line) in content.lines().enumerate() {
+        let index_string: String = index.to_string();
+        let mut new_line = line.to_string();
+        if *flag_number {
+            new_line = index_string + " " + line;
+        }
+        
+        split_lines.push(new_line);
+    }
+
+    for line in split_lines {
+        println!("{line}");
+    }
 
     Ok(())
 }
