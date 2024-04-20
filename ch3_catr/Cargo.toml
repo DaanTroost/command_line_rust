@@ -1,5 +1,6 @@
 [package]
 name = "ch3_catr"
+author = "Daniël Quirinus Troost <d.q.troost@outlook.com>"
 version = "0.1.0"
 edition = "2021"
 

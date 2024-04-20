@@ -1,53 +1,35 @@
-use clap::{Arg, ArgAction, Command, Parser};
+use clap::Parser;
 use anyhow::Result;
 
 
-#[derive(Debug)]
+#[derive(Debug, Parser)]
+#[command(author = "Daniël Quirinus Troost<d.q.troost@outlook.com>")]
+#[command(version = "0.1.0")]
+#[command(
+    help_template = "Author: {author-with-newline} {about-section} \n Version: {version} \n\n {usage-heading} \n {usage} \n\n{all-args}"
+)]
+#[command(about)]
+///'cat', written in Rust, btw
 struct Arguments {
+    ///File to be printed to stdout
+    #[arg(value_name = "FILE", default_value = "-")]
     files: Vec<String>,
+
+    ///Set this flag to number the lines, including blank lines.
+    #[arg(
+        short('n'),
+        long("number-lines"),
+        conflicts_with("number_nonblank_lines")
+    )]
     number_lines: bool,
+
+    ///Set this flag to number the lines, skipping blank lines.
+    #[arg(short('b'), long("number-nonblank-lines"))]
     number_nonblank_lines: bool,
 }
 
-fn get_args() -> Arguments {
-    let matches = Command::new("catr")
-        .version("0.1.0")
-        .author("Daniël Quirinus Troost <d.q.troost@outlook.com")
-        .about("cat, written in Rust btw")
-        .arg(
-            Arg::new("filename")
-                .value_name("FILENAME")
-                .help("File to be printed to stdout")
-                .required(true)
-                .num_args(1..)
-                .default_value("-"),
-        )
-        .arg(
-            Arg::new("linenumbers")
-                .short('n')
-                .long("show-linenumbers")
-                .help("Set this flag to show line numbers, including blank lines")
-                .action(ArgAction::SetTrue)
-                .conflicts_with("non-blank_linenumbers"),
-        )
-        .arg(
-            Arg::new("non-blank_linenumbers")
-                .short('b')
-                .long("show-nonblank-linenumbers")
-                .help("Set this flag to show line numbers, skipping blank lines")
-                .action(ArgAction::SetTrue),
-        )
-        .get_matches();
-
-    Arguments {
-        files: matches.get_many("filename").unwrap().cloned().collect(),
-        number_lines: matches.get_flag("linenumbers"),
-        number_nonblank_lines: matches.get_flag("non-blank_linenumbers"),
-    }
-}
-
 fn main() {
-    if let Err(e) = run(get_args()) {
+    if let Err(e) = run(Arguments::parse()) {
         eprintln!("{e}");
         std::process::exit(1);
     }
