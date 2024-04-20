@@ -57,12 +57,23 @@ fn read_file(filename: &str, flag_number: &bool, flag_number_nonblank: &bool) ->
     let content = fs::read_to_string(filename)?;
 
     let mut split_lines: Vec<String> = vec![];
+    let mut blank_lines = 0;
 
     for (index, line) in content.lines().enumerate() {
         let index_string: String = index.to_string();
         let mut new_line = line.to_string();
         if *flag_number {
             new_line = index_string + " " + line;
+        }
+        
+        if *flag_number_nonblank {
+            if line.is_empty() {
+                blank_lines += 1;
+                new_line = "".to_string();
+            } else {
+                let corrected_index_string = (index - blank_lines).to_string();
+                new_line = corrected_index_string + " " + line;
+            }
         }
         
         split_lines.push(new_line);
