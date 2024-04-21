@@ -1,6 +1,6 @@
 use anyhow::Result;
 use clap::Parser;
-use std::fs::{self, File};
+use std::fs::File;
 use std::io::{self, BufRead, BufReader};
 
 #[derive(Debug, Parser)]
@@ -40,7 +40,28 @@ fn run(args: Arguments) -> Result<()> {
     for filename in args.files {
         match open_file(&filename) {
             Err(err) => eprintln!("Failed to open {filename}: {err}"),
-            Ok(_) => read_file(&filename, &args.number_lines, &args.number_nonblank_lines)?,
+            Ok(file) => {
+                let mut blank_lines = 0;
+
+                for (line_num, line_result) in file.lines().enumerate() {
+                    let line = line_result?;
+
+                    if args.number_lines {
+                        println!("{:>6}\t{line}", line_num + 1);
+                    } else if args.number_nonblank_lines {
+                    
+                        if line.is_empty() {
+                            println!();
+                            blank_lines += 1;
+                        } else {
+                            println!("{:>6}\t{line}", line_num - blank_lines + 1)
+                        }
+                    
+                    } else {
+                        println!("{line}")
+                    }
+                }
+            }
         }
     }
     Ok(())
@@ -51,37 +72,4 @@ fn open_file(filename: &str) -> Result<Box<dyn BufRead>> {
         "-" => Ok(Box::new(BufReader::new(io::stdin()))),
         _ => Ok(Box::new(BufReader::new(File::open(filename)?))),
     }
-}
-
-fn read_file(filename: &str, flag_number: &bool, flag_number_nonblank: &bool) -> Result<()> {
-    let content = fs::read_to_string(filename)?;
-
-    let mut split_lines: Vec<String> = vec![];
-    let mut blank_lines = 0;
-
-    for (index, line) in content.lines().enumerate() {
-        let index_string: String = index.to_string();
-        let mut new_line = line.to_string();
-        if *flag_number {
-            new_line = index_string + " " + line;
-        }
-        
-        if *flag_number_nonblank {
-            if line.is_empty() {
-                blank_lines += 1;
-                new_line = "".to_string();
-            } else {
-                let corrected_index_string = (index - blank_lines).to_string();
-                new_line = corrected_index_string + " " + line;
-            }
-        }
-        
-        split_lines.push(new_line);
-    }
-
-    for line in split_lines {
-        println!("{line}");
-    }
-
-    Ok(())
 }
