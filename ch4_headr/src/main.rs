@@ -6,16 +6,16 @@ use std::{
 };
 
 use anyhow::Result;
-use clap::{Arg, Command, Parser};
+use clap::{Arg, Command};
 
 #[derive(Debug)]
-struct Args {
+struct Arguments {
     files: Vec<String>,
     bytes: Option<u64>,
     lines: u64,
 }
 
-fn get_args() -> Args {
+fn get_args() -> Arguments {
     let matches = Command::new("headr")
         .version("0.1.0")
         .author("Daan Troost <d.q.troost@outlook.com>")
@@ -47,7 +47,7 @@ fn get_args() -> Args {
         )
         .get_matches();
 
-    Args {
+    Arguments {
         files: matches.get_many("file").unwrap().cloned().collect(),
         lines: matches.get_one("lines").cloned().unwrap(),
         bytes: matches.get_one("bytes").cloned(),
@@ -61,12 +61,12 @@ fn main() {
     }
 }
 
-fn run(args: Args) -> Result<()> {
-    for filename in args.files {
+fn run(args: Arguments) -> Result<()> {
+    for filename in &args.files {
         match openFile(&filename) {
             Err(err) => eprintln!("{filename}: {err}"),
-            Ok(_) => printContent(&filename),
-        }
+            Ok(mut file) => processContent(&mut file, &args),
+        };
     }
     Ok(())
 }
@@ -78,4 +78,23 @@ fn openFile(filename: &str) -> Result<Box<dyn BufRead>> {
     }
 }
 
-fn printContent(_filename: &str) {}
+fn processContent(file: &mut Box<dyn BufRead>, args: &Arguments) {
+    if let Some(num_bytes) = args.bytes {
+        let buffer = vec![0; num_bytes as usize];
+        let bytes_read = file.read(&buffer);
+
+        print!("{}", String::from_utf8_lossy(&buffer[..bytes_read]));
+    } else {
+        let mut line = String::new();
+
+        for _ in 0..args.lines {
+            let bytes = file.read_line(&mut line);
+            if bytes == 0 {
+                break;
+            }
+
+            print!("{line}");
+            line.clear();
+        }
+    }
+}
