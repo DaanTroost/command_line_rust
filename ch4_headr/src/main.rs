@@ -65,7 +65,25 @@ fn run(args: Arguments) -> Result<()> {
     for filename in &args.files {
         match openFile(&filename) {
             Err(err) => eprintln!("{filename}: {err}"),
-            Ok(mut file) => processContent(&mut file, &args),
+            Ok(mut file) => {
+                if let Some(num_bytes) = args.bytes {
+                    let mut buffer = vec![0; num_bytes as usize];
+                    let bytes = file.read(&mut buffer)?;
+                    print!("{}", String::from_utf8_lossy(&buffer[..bytes]));
+                } else {
+                    let mut line = String::new();
+
+                    for _ in 0..args.lines {
+                        let bytes = file.read_line(&mut line)?;
+                        if bytes == 0 {
+                            break;
+                        }
+
+                        print!("{line}");
+                        line.clear();
+                    }
+                }
+            }
         };
     }
     Ok(())
@@ -75,26 +93,5 @@ fn openFile(filename: &str) -> Result<Box<dyn BufRead>> {
     match filename {
         "-" => Ok(Box::new(BufReader::new(io::stdin()))),
         _ => Ok(Box::new(BufReader::new(File::open(filename)?))),
-    }
-}
-
-fn processContent(file: &mut Box<dyn BufRead>, args: &Arguments) {
-    if let Some(num_bytes) = args.bytes {
-        let buffer = vec![0; num_bytes as usize];
-        let bytes_read = file.read(&buffer);
-
-        print!("{}", String::from_utf8_lossy(&buffer[..bytes_read]));
-    } else {
-        let mut line = String::new();
-
-        for _ in 0..args.lines {
-            let bytes = file.read_line(&mut line);
-            if bytes == 0 {
-                break;
-            }
-
-            print!("{line}");
-            line.clear();
-        }
     }
 }
