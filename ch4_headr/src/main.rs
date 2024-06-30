@@ -62,10 +62,15 @@ fn main() {
 }
 
 fn run(args: Arguments) -> Result<()> {
-    for filename in &args.files {
+    let num_files = args.files.len();
+
+    for (file_num, filename) in args.files.iter().enumerate() {
         match openFile(&filename) {
             Err(err) => eprintln!("{filename}: {err}"),
             Ok(mut file) => {
+                if num_files > 1 {
+                    println!("{}==> {filename} <==", if file_num > 0 { "\n" } else { "" });
+                }
                 if let Some(num_bytes) = args.bytes {
                     let mut buffer = vec![0; num_bytes as usize];
                     let bytes = file.read(&mut buffer)?;
